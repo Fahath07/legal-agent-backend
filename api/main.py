@@ -910,6 +910,24 @@ async def export_md(report_id: str):
     actions = report.get("immediate_actions", [])
     penalties = report.get("penalty_estimates", [])
 
+    findings_md = ''.join([f"""### {f.get('title','')}
+**Category:** {f.get('category','')} | **Severity:** {f.get('severity','').upper()}
+
+{f.get('description','')}
+
+**Recommendation:** {f.get('recommendation','')}
+
+**Legal Reasoning:** {f.get('reasoning','')}
+
+---
+""" for f in findings])
+
+    regs_md = ''.join([f"- **{r['name']}** {r.get('article','') or r.get('section','')} — {r['description']} *(Severity: {r['severity']})*\n" for r in regs])
+
+    penalties_md = ''.join([f"- **{p['regulation']}:** {p['currency']} {p['min_amount']:,.0f}–{p['max_amount']:,.0f} ({p['basis']})\n" for p in penalties])
+
+    actions_md = ''.join([f"- [ ] **{a['action']}**\n  - Owner: {a['owner']} | Deadline: {a['deadline']}\n  - Legal Basis: {a['legal_basis']}\n" for a in actions])
+
     md = f"""# LexGuardian AI — Legal Report {report['id']}
 
 **Date:** {report['created_at']}
@@ -940,33 +958,23 @@ async def export_md(report_id: str):
 
 ## Legal Findings ({len(findings)})
 
-{''.join([f"""### {f.get('title','')}
-**Category:** {f.get('category','')} | **Severity:** {f.get('severity','').upper()}
-
-{f.get('description','')}
-
-**Recommendation:** {f.get('recommendation','')}
-
-**Legal Reasoning:** {f.get('reasoning','')}
-
----
-""" for f in findings])}
+{findings_md}
 
 ## Regulations Triggered ({len(regs)})
 
-{''.join([f"- **{r['name']}** {r.get('article','') or r.get('section','')} — {r['description']} *(Severity: {r['severity']})*\\n" for r in regs])}
+{regs_md}
 
 ---
 
 ## Penalty Estimates
 
-{''.join([f"- **{p['regulation']}:** {p['currency']} {p['min_amount']:,.0f}–{p['max_amount']:,.0f} ({p['basis']})\\n" for p in penalties])}
+{penalties_md}
 
 ---
 
 ## Immediate Actions Required
 
-{''.join([f"- [ ] **{a['action']}**\\n  - Owner: {a['owner']} | Deadline: {a['deadline']}\\n  - Legal Basis: {a['legal_basis']}\\n" for a in actions])}
+{actions_md}
 
 ---
 
